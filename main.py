@@ -12,6 +12,7 @@ try:
     st.success("Model loaded successfully!")
 except Exception as e:
     st.error(f"Error loading model: {e}")
+    st.stop()  # Stop execution if model loading fails
 
 # Mapping dictionary for class indices
 map_dict = {0: 'Cloudy',
@@ -27,6 +28,10 @@ if uploaded_file is not None:
         # Convert the uploaded file to an OpenCV image
         file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
         opencv_image = cv2.imdecode(file_bytes, 1)
+        if opencv_image is None:
+            st.error("Error decoding image. Please upload a valid image file.")
+            st.stop()
+
         opencv_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
         resized = cv2.resize(opencv_image, (224, 224))
 
@@ -40,8 +45,13 @@ if uploaded_file is not None:
         # Button to generate prediction
         if st.button("Generate Prediction"):
             try:
-                prediction = model.predict(img_reshape).argmax()
-                st.title(f"Predicted Label for the image is {map_dict[prediction]}")
+                # Predict and log output
+                prediction = model.predict(img_reshape)
+                predicted_class = np.argmax(prediction)
+
+                # Log prediction output
+                st.write(f"Prediction array: {prediction}")
+                st.title(f"Predicted Label for the image is {map_dict[predicted_class]}")
             except Exception as e:
                 st.error(f"Error during prediction: {e}")
     except Exception as e:
