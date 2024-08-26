@@ -7,7 +7,11 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as mobil
 st.title("Satellite Image Classification")
 
 # Load the pre-trained model
-model = tf.keras.models.load_model('best_model.h5')
+try:
+    model = tf.keras.models.load_model('best_model.h5')
+    st.success("Model loaded successfully!")
+except Exception as e:
+    st.error(f"Error loading model: {e}")
 
 # Mapping dictionary for class indices
 map_dict = {0: 'Cloudy',
@@ -19,21 +23,26 @@ map_dict = {0: 'Cloudy',
 uploaded_file = st.file_uploader("Choose an image file", type="jpg")
 
 if uploaded_file is not None:
-    # Convert the uploaded file to an OpenCV image
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    opencv_image = cv2.imdecode(file_bytes, 1)
-    opencv_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
-    resized = cv2.resize(opencv_image, (224, 224))
+    try:
+        # Convert the uploaded file to an OpenCV image
+        file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        opencv_image = cv2.imdecode(file_bytes, 1)
+        opencv_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+        resized = cv2.resize(opencv_image, (224, 224))
 
-    # Display the uploaded image
-    st.image(opencv_image, channels="RGB")
+        # Display the uploaded image
+        st.image(opencv_image, channels="RGB")
 
-    # Preprocess the image for MobileNetV2
-    resized = mobilenet_v2_preprocess_input(resized)
-    img_reshape = np.expand_dims(resized, axis=0)  # Ensure correct shape for model input
+        # Preprocess the image for MobileNetV2
+        resized = mobilenet_v2_preprocess_input(resized)
+        img_reshape = np.expand_dims(resized, axis=0)  # Ensure correct shape for model input
 
-    # Button to generate prediction
-    generate_pred = st.button("Generate Prediction")
-    if generate_pred:
-        prediction = model.predict(img_reshape).argmax()
-        st.title(f"Predicted Label for the image is {map_dict[prediction]}")
+        # Button to generate prediction
+        if st.button("Generate Prediction"):
+            try:
+                prediction = model.predict(img_reshape).argmax()
+                st.title(f"Predicted Label for the image is {map_dict[prediction]}")
+            except Exception as e:
+                st.error(f"Error during prediction: {e}")
+    except Exception as e:
+        st.error(f"Error processing image: {e}")
